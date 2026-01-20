@@ -13,7 +13,6 @@
         #tipinput {width: 300px;padding: 8px;border: 1px solid #ddd;border-radius: 4px;font-size: 14px;}
         #searchBtn {padding: 8px 20px;background: #4895ef;color: #fff;border: none;border-radius: 4px;cursor: pointer;font-size: 14px;}
         #searchBtn:hover {background: #3a84d8;}
-        /* 调整坐标容器为垂直排列，容纳两个坐标框 */
         .coord-container {
             position: absolute;
             bottom: 20px;
@@ -23,7 +22,7 @@
             border-radius: 4px;
             box-shadow: 0 2px 6px rgba(0,0,0,0.1);
             display: flex;
-            flex-direction: column; /* 垂直排列 */
+            flex-direction: column;
             gap: 8px;
         }
         .coord-item {
@@ -72,16 +71,14 @@
                         <input id="tipinput" type="text" placeholder="输入地址（如：北京市朝阳区）" />
                         <button id="searchBtn">查询</button>
                     </div>
-                    <!-- 原顺序：经度, 纬度 -->
                     <div class="coord-item">
                         <span class="coord-label">经纬度：</span>
-                        <input id="coordOrigin" class="coord-input" type="text" placeholder="经度, 纬度" readonly>
+                        <input id="coordOrigin" class="coord-input" type="text" placeholder="经度,纬度" readonly>
                         <button class="copy-btn" data-target="coordOrigin">复制</button>
                     </div>
-                    <!-- 新增：调换顺序：纬度, 经度 -->
                     <div class="coord-item">
-                        <span class="coord-label">经纬度(反):</span>
-                        <input id="coordSwap" class="coord-input" type="text" placeholder="纬度, 经度" readonly>
+                        <span class="coord-label">王者战区用:</span>
+                        <input id="coordSwap" class="coord-input" type="text" placeholder="纬度,经度" readonly>
                         <button class="copy-btn" data-target="coordSwap">复制</button>
                     </div>
                 </td>
@@ -89,18 +86,14 @@
         </table>
     </div>
 
-
-    <!-- 地图显示用Key：b490ec80c29aba58be3477b6a044ddc2 -->
     <script type="text/javascript" src="https://webapi.amap.com/maps?v=2.0&key=b490ec80c29aba58be3477b6a044ddc2"></script>
     <script type="text/javascript">
-        // 初始化地图
         var map = new AMap.Map("container", {
             resizeEnable: true,
             zoom: 12,
             center: [116.39748, 39.904211]
         });
         
-        // 标记点实例
         var marker = new AMap.Marker({
             draggable: true,
             cursor: 'move',
@@ -108,19 +101,16 @@
         });
         marker.addTo(map);
         
-        // 输入提示配置
         var autoOptions = {
             input: "tipinput",
             city: '全国',
             outPutDirAuto: true
         };
         
-        // 加载插件
         AMap.plugin(['AMap.AutoComplete'], function(){
             var auto = new AMap.AutoComplete(autoOptions);
         });
         
-        // 点击查询按钮（地理编码用Key：e93e063623faa0d30de68a77fbee674b）
         document.getElementById('searchBtn').addEventListener('click', function() {
             var keyword = document.getElementById('tipinput').value.trim();
             if (!keyword) {
@@ -128,7 +118,6 @@
                 return;
             }
         
-            // 调用地理编码API（使用开通权限的Key）
             fetch(`https://restapi.amap.com/v3/geocode/geo?address=${encodeURIComponent(keyword)}&key=e93e063623faa0d30de68a77fbee674b`)
             .then(res => res.json())
             .then(data => {
@@ -136,13 +125,9 @@
                     var locStr = data.geocodes[0].location;
                     var [lng, lat] = locStr.split(',').map(Number);
                     var lnglat = new AMap.LngLat(lng, lat);
-                    
-                    // 地图跳转定位
                     map.setCenter(lnglat);
                     map.setZoom(15);
                     marker.setPosition(lnglat);
-                    
-                    // 更新两个坐标框显示（替换原updateCoordText）
                     updateCoordDisplay(lng, lat);
                 } else {
                     alert('未找到匹配的地址，请尝试更详细的关键词');
@@ -153,14 +138,12 @@
             });
         });
         
-        // 回车触发查询
         document.getElementById('tipinput').addEventListener('keyup', function(e) {
             if (e.key === 'Enter') {
                 document.getElementById('searchBtn').click();
             }
         });
         
-        // 地图点击拾取坐标
         map.on('click', function(e) {
             var lng = e.lnglat.lng;
             var lat = e.lnglat.lat;
@@ -168,14 +151,12 @@
             updateCoordDisplay(lng, lat);
         });
         
-        // 拖拽标记点更新坐标
         marker.on('dragend', function(e) {
             var lng = e.lnglat.lng;
             var lat = e.lnglat.lat;
             updateCoordDisplay(lng, lat);
         });
         
-        // 复制按钮点击事件（通用处理）
         document.querySelectorAll('.copy-btn').forEach(btn => {
             btn.addEventListener('click', function() {
                 var targetId = this.getAttribute('data-target');
@@ -192,17 +173,13 @@
             });
         });
         
-        // 新增：更新两个坐标框的显示内容
+        // 核心修改：去掉逗号后空格，直接拼接
         function updateCoordDisplay(lng, lat) {
-            // 原顺序：经度, 纬度
-            var originStr = `${lng.toFixed(6)}, ${lat.toFixed(6)}`;
-            // 调换顺序：纬度, 经度
-            var swapStr = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
-            
+            var originStr = `${lng.toFixed(6)},${lat.toFixed(6)}`;
+            var swapStr = `${lat.toFixed(6)},${lng.toFixed(6)}`;
             document.getElementById('coordOrigin').value = originStr;
             document.getElementById('coordSwap').value = swapStr;
         }
     </script>
 </body>
-
 </html>
