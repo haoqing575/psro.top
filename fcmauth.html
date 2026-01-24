@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>实名验证</title>
+    <meta http-equiv="Content-Type" content="application/json; charset=utf-8">
+    <script>
+        // 禁止页面缓存
+        document.addEventListener('DOMContentLoaded', function() {
+            // 获取URL参数
+            function getUrlParam(name) {
+                let reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)");
+                let r = window.location.search.substr(1).match(reg);
+                if (r != null) return decodeURIComponent(r[2]);
+                return '';
+            }
+
+            // 获取姓名和身份证号
+            let name = getUrlParam('name').trim();
+            let idNum = getUrlParam('idNum').trim();
+
+            // 空参数判断
+            if (!name || !idNum) {
+                document.body.innerHTML = JSON.stringify({code: '', info: '请在URL后拼接?name=姓名&idNum=身份证号'}, null, 2);
+                return;
+            }
+
+            // 获取当前毫秒时间戳
+            let timestamp = new Date().getTime();
+
+            // 拼接请求地址和参数
+            let url = 'https://web.7k7k.com/api/fcmauth.php';
+            let params = new URLSearchParams({
+                gid: 'register',
+                uid: timestamp,
+                name: name,
+                idNum: idNum
+            });
+            url += '?' + params.toString();
+
+            // 发起请求
+            fetch(url, {
+                method: 'GET',
+                mode: 'cors',
+                cache: 'no-cache',
+                timeout: 10000,
+                headers: {
+                    'Accept': '*/*',
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/121.0.0.0 Safari/537.36'
+                }
+            })
+            .then(response => {
+                if (!response.ok) throw new Error('请求失败');
+                return response.json();
+            })
+            .then(data => {
+                // 仅保留code和info，缺失置空
+                let result = {
+                    code: data.code !== undefined ? data.code : '',
+                    info: data.info !== undefined ? data.info : ''
+                };
+                // 格式化输出JSON
+                document.body.innerHTML = JSON.stringify(result, null, 2);
+            })
+            .catch(error => {
+                // 异常兜底
+                document.body.innerHTML = JSON.stringify({code: '', info: '请求异常：' + error.message}, null, 2);
+            });
+        });
+    </script>
+    <style>
+        body {
+            font-family: monospace;
+            white-space: pre;
+            padding: 10px;
+            margin: 0;
+            background: #fff;
+        }
+    </style>
+</head>
+<body></body>
+</html>
